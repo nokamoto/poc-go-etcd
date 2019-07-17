@@ -5,3 +5,8 @@ services:
       context: .
       dockerfile: ./docker/etcd/Dockerfile
     image: nokamoto/etcd:latest
+  poc-go-etcd:
+    build:
+      context: .
+      dockerfile: ./docker/poc-go-etcd/Dockerfile
+    image: nokamoto/poc-go-etcd:latest
