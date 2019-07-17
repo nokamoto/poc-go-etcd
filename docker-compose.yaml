@@ -5,8 +5,13 @@ services:
       context: .
       dockerfile: ./docker/etcd/Dockerfile
     image: nokamoto/etcd:latest
+    environment:
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_ADVERTISE_CLIENT_URLS: http://etcd:2379
   poc-go-etcd:
     build:
       context: .
       dockerfile: ./docker/poc-go-etcd/Dockerfile
     image: nokamoto/poc-go-etcd:latest
+    depends_on:
+      - etcd
