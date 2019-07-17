@@ -1,0 +1,7 @@
+version: '3'
+services:
+  etcd:
+    build:
+      context: .
+      dockerfile: ./docker/etcd/Dockerfile
+    image: nokamoto/etcd:latest

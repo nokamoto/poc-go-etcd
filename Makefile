@@ -1,9 +1,15 @@
+.PHONY: docker
 
-all: test
-	go build .
+all: test bin docker
 
 test: fmt
 	go test .
 
 fmt:
 	gofmt -d -w .
+
+bin:
+	go build .
+
+docker:
+	docker-compose build
