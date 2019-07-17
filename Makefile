@@ -13,3 +13,7 @@ bin:
 
 docker:
 	docker-compose build
+
+exec: all
+	docker-compose down
+	docker-compose up
