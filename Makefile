@@ -4,6 +4,7 @@ all: test bin docker
 
 test: fmt
 	go test .
+	go mod tidy
 
 fmt:
 	gofmt -d -w .
