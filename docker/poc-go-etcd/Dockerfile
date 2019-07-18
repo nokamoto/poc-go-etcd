@@ -5,6 +5,10 @@ RUN apk update && apk add git
 WORKDIR /src
 
 COPY go.mod .
+COPY go.sum .
+
+RUN go list -m all
+
 COPY main.go .
 
 RUN go build .
