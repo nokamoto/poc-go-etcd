@@ -129,6 +129,44 @@ func TransactionalWrite(cli *clientv3.Client) {
 	log.Printf("get(user1): %v", got)
 }
 
+func Watch(cli *clientv3.Client) {
+	// https://etcd.io/docs/v3.3.12/demo/#watch
+	ctx := context.Background()
+	size := 10
+
+	watch := cli.Watch(ctx, "stock", clientv3.WithPrefix())
+
+	go func() {
+		for i := 0; i <= size; i++ {
+			key := fmt.Sprintf("stock%d", i)
+			value := fmt.Sprintf("value%d", i)
+
+			res, err := cli.Put(ctx, key, value)
+			if err != nil {
+				panic(err)
+			}
+
+			log.Printf("put(%s, %s): %v", key, value, res)
+
+			time.Sleep(3 * time.Second)
+		}
+	}()
+
+	i := 0
+	for observed := range watch {
+		log.Printf("%d/%d: watch(stock) wth prefix: %v", i, size, observed)
+		for j, ev := range observed.Events {
+			log.Printf("%d/%d: events[%d]=%v", i, size, j, ev)
+		}
+		if i >= size {
+			break
+		}
+		i = i + 1
+	}
+
+	// cli.Close() ?
+}
+
 func main() {
 	flag.Parse()
 
@@ -141,9 +179,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer cli.Close()
 
 	AccessEtcd(cli)
 	GetByPrefix(cli)
 	Delete(cli)
 	TransactionalWrite(cli)
+	Watch(cli)
 }
