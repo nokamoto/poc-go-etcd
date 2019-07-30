@@ -98,6 +98,37 @@ func Delete(cli *clientv3.Client) {
 	log.Printf("delete(%s) with prefix: deleted=%v", prefix, deleted.Deleted)
 }
 
+func TransactionalWrite(cli *clientv3.Client) {
+	//https://etcd.io/docs/v3.3.12/demo/#transactional-write
+	ctx := context.TODO()
+
+	res, err := cli.Put(context.Background(), "user1", "bad")
+	if err != nil {
+		panic(err)
+	}
+
+	log.Printf("put(user1, bad): %v", res)
+
+	tx := cli.Txn(ctx)
+	committed, err := tx.
+		If(clientv3.Compare(clientv3.Value("user1"), "=", "bad")).
+		Then(clientv3.OpDelete("user1")).
+		Else(clientv3.OpPut("user1", "good")).
+		Commit()
+	if err != nil {
+		panic(err)
+	}
+
+	log.Printf("compares(user1, =, bad) then delete(user1) else put(user1, good): %v", committed)
+
+	got, err := cli.Get(context.Background(), "user1")
+	if err != nil {
+		panic(err)
+	}
+
+	log.Printf("get(user1): %v", got)
+}
+
 func main() {
 	flag.Parse()
 
@@ -114,4 +145,5 @@ func main() {
 	AccessEtcd(cli)
 	GetByPrefix(cli)
 	Delete(cli)
+	TransactionalWrite(cli)
 }
