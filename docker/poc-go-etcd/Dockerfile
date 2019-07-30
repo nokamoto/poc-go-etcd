@@ -7,7 +7,7 @@ WORKDIR /src
 COPY go.mod .
 COPY go.sum .
 
-RUN go list -m all
+RUN go mod download
 
 COPY main.go .
 
