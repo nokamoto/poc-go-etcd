@@ -167,6 +167,56 @@ func Watch(cli *clientv3.Client) {
 	// cli.Close() ?
 }
 
+func Lease(cli *clientv3.Client) {
+	// https://etcd.io/docs/v3.3.12/demo/#lease
+	ctx := context.Background()
+	ttl := int64(300)
+	lease, err := cli.Grant(ctx, ttl)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("grant(%d): %v\n", ttl, lease)
+
+	key := "sample"
+	value := "value"
+
+	res, err := cli.Put(ctx, key, value, clientv3.WithLease(lease.ID))
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("put(%s, %s): %v\n", key, value, res)
+
+	got, err := cli.Get(ctx, key)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("get(%s): %v\n", key, got)
+
+	ka, err := cli.KeepAliveOnce(ctx, lease.ID)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("keepalive(%v): %v\n", lease.ID, ka)
+
+	revoked, err := cli.Revoke(ctx, lease.ID)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("revoke(%v): %v\n", lease.ID, revoked)
+
+	got, err = cli.Get(ctx, key)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("get(%s): %v\n", key, got)
+}
+
 func main() {
 	flag.Parse()
 
@@ -186,4 +236,5 @@ func main() {
 	Delete(cli)
 	TransactionalWrite(cli)
 	Watch(cli)
+	Lease(cli)
 }
