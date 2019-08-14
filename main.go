@@ -4,7 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/etcd-io/etcd/clientv3"
+	"github.com/coreos/etcd/clientv3"
+	"github.com/coreos/etcd/clientv3/concurrency"
 	"log"
 	"time"
 )
@@ -217,6 +218,45 @@ func Lease(cli *clientv3.Client) {
 	fmt.Printf("get(%s): %v\n", key, got)
 }
 
+func DistributedLocks(cli *clientv3.Client) {
+	// https://etcd.io/docs/v3.3.12/demo/#distributed-locks
+	s1, err := concurrency.NewSession(cli, concurrency.WithTTL(60))
+	if err != nil {
+		panic(err)
+	}
+	defer s1.Close()
+
+	mu1 := concurrency.NewMutex(s1, "mutex1")
+	fmt.Println("mu1 lock")
+	err = mu1.Lock(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("mu1 acquired")
+
+	go func() {
+		fmt.Println("mu1 sleep 5 seconds...")
+		time.Sleep(5 * time.Second)
+		fmt.Println("mu1 unlock")
+		mu1.Unlock(context.Background())
+		fmt.Println("mu1 released")
+	}()
+
+	s2, err := concurrency.NewSession(cli, concurrency.WithTTL(60))
+	if err != nil {
+		panic(err)
+	}
+	defer s2.Close()
+
+	mu2 := concurrency.NewMutex(s2, "mutex1")
+	fmt.Println("mu2 lock")
+	err = mu2.Lock(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("mu2 acquired")
+}
+
 func main() {
 	flag.Parse()
 
@@ -237,4 +277,5 @@ func main() {
 	TransactionalWrite(cli)
 	Watch(cli)
 	Lease(cli)
+	DistributedLocks(cli)
 }
